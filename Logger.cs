@@ -14,8 +14,8 @@ namespace ObjectRetriever
 
         private Logger()
         {
-            string logFileName = Path.Combine(Directory.GetCurrentDirectory(), $"ObjectRetriever-" +
-                $"{DateTime.Now.ToString(new CultureInfo("en-US").DateTimeFormat)}.log"); 
+            string dateTime = DateTime.Now.ToString("MMM-dd-yyyy-hh-mm", new CultureInfo("en-US"));
+            string logFileName = Path.Combine(Directory.GetCurrentDirectory(), $"ObjectRetriever-{dateTime}.log"); 
             _fileLogger = new StreamWriter(logFileName, false);
         }
 

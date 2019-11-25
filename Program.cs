@@ -5,8 +5,11 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Resources;
 using System.Text;
 
+[assembly: CLSCompliant(true)]
+[assembly: NeutralResourcesLanguage("en")]
 namespace ObjectRetriever
 {
     //TODO: Bundle PSExec as a resource in the Executable 
@@ -16,12 +19,12 @@ namespace ObjectRetriever
     static internal class Program
     {
         private static Logger Logger = Logger.LoggerInstance;
-        private static string CurrentDirectory = Directory.GetCurrentDirectory();
-        private static string PSExecFilePath = Path.Combine(CurrentDirectory, "PSExec.exe");
+        private static readonly string CurrentDirectory = Directory.GetCurrentDirectory();
+        private static readonly string PSExecFilePath = Path.Combine(CurrentDirectory, "PSExec.exe");
 
         static void Main(string[] args)
         {
-            using(var parser = new Parser(config => config.HelpWriter = null))
+            using (var parser = new Parser(config => config.HelpWriter = null))
             {
                 var parserResult = parser.ParseArguments<Options>(args);
 
@@ -32,15 +35,15 @@ namespace ObjectRetriever
 
         private static void Run(Options options)
         {
-            Logger.Log("Application start");
+            Logger.Log(Strings.startMessage);
             string hostName = options.HostName;
             string targetObject = options.TargetObject;
             bool printToFile = options.PrintToFile;
 
             var retrievalData = new List<(string objectName, bool retrievalFlag)>
             {
-                (Proprietary.EnabledServicesObject, options.GetEnabledServices),
-                (Proprietary.EnabledLoggingObject, options.GetEnabledLogging)
+                (Strings.servicesObject, options.GetEnabledServices),
+                (Strings.loggingObject, options.GetEnabledLogging)
             };
 
             // This is extracting only the boolean flags from the tuple retrievalData into a list.  
@@ -75,7 +78,7 @@ namespace ObjectRetriever
             }
 
             Console.ReadKey();
-            Logger.Log("Application end");
+            Logger.Log(Strings.endMessage);
             DisposePsExec(PSExecFilePath);
             Logger.Dispose();
         }
@@ -103,7 +106,7 @@ namespace ObjectRetriever
             retrievedObject = retrievedObject.Substring(0, retrievedObject.IndexOf(Environment.NewLine)) // Get the first line of the object output.
                                              .Replace("Object", "") // Get rid of the "Object:" title in the output. 
                                              .Replace("Path", "") // Get rid of the "Path:" title in the output. 
-                                             + "-" + DateTime.Now.ToString(new CultureInfo("en-US").DateTimeFormat); // Append the current time for a unique file name. 
+                                             + $"-{DateTime.Now.ToString("dd-MM-yyyy", new CultureInfo("en-US"))}";  // Append the current time for a unique file name. 
 
 
             // Remove all invalid characters for a final file name. 
@@ -207,8 +210,8 @@ namespace ObjectRetriever
                 CreateNoWindow = true,
                 StandardOutputEncoding = Encoding.Unicode,
                 WindowStyle = ProcessWindowStyle.Hidden,
-                FileName = "PSExec", //TODO: Put the below command in a diferent place and don't commit it in repo. 
-                Arguments = $@"/s -nobanner \\{hostName} {Proprietary.ListObjectTreeCommand} {targetObject}"
+                FileName = "PSExec",
+                Arguments = $@"/s -nobanner \\{hostName} {Strings.listObjectTreeCommand} {targetObject}"
             };
 
             using (Process proc = new Process())
@@ -229,7 +232,7 @@ namespace ObjectRetriever
         private static void FatalError(string message)
         {
             Logger.Log($"Fatal Error: {message}");
-            Logger.Log("Application end");
+            Logger.Log(Strings.endMessage);
             Logger.Dispose();
             DisposePsExec(PSExecFilePath);
 
