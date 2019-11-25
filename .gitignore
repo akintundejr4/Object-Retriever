@@ -8,6 +8,6 @@ Resources/
 # Proprietary Stuff 
 Proprietary.cs
 
-# Hiden Folders
+# Hidden Folders
 .*
 !/.gitignore
