@@ -1,2 +1,2 @@
 # Object-Retriever
-A program to grab configuration objects on distributed machines, relevant to position at time of creation. 
+Command line tool to grab a specific format of configuration objects from target PC's. Relevant to my position at time of creation.
