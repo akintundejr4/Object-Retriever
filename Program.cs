@@ -7,6 +7,7 @@ using System.Resources;
 using System.Diagnostics;
 using System.Globalization;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 [assembly: CLSCompliant(true)]
 [assembly: NeutralResourcesLanguage("en")]
@@ -77,7 +78,6 @@ namespace ObjectRetriever
                 RunCommonObjectRetrievals(hostName, printToFile, retrievalData);
             }
 
-            Console.ReadKey();
             Logger.Log(Strings.endMessage);
             DisposePsExec(PSExecFilePath);
             Logger.Dispose();
@@ -223,14 +223,14 @@ namespace ObjectRetriever
         /// </summary>
         private static string RetrieveObject(string hostName, string targetObject)
         {
-            string retrievedObject = "";
-
             ProcessStartInfo info = new ProcessStartInfo()
             {
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
+                RedirectStandardError = true, 
                 CreateNoWindow = true,
                 StandardOutputEncoding = Encoding.Unicode,
+                StandardErrorEncoding = Encoding.Unicode, 
                 WindowStyle = ProcessWindowStyle.Hidden,
                 FileName = "PSExec",
                 Arguments = $@"/s -nobanner \\{hostName} {Strings.listObjectTreeCommand} {targetObject}"
@@ -239,11 +239,12 @@ namespace ObjectRetriever
             using (Process proc = new Process())
             {
                 proc.StartInfo = info;
-                proc.Start();
-                retrievedObject = proc.StandardOutput.ReadToEnd();
+                proc.Start(); 
+                string standardOutput = proc.StandardOutput.ReadToEnd();
+                // There's some junk in the error messaging of the retrieval command so pulling that out. 
+                string errorOutput = new Regex(@"[^a-zA-Z0-9 \\\/]").Replace(proc.StandardError.ReadToEnd(), "");
+                return string.IsNullOrEmpty(standardOutput) ? errorOutput : standardOutput; 
             }
-
-            return retrievedObject;
         }
 
         /// <summary>
