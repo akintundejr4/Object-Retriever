@@ -1,21 +1,17 @@
-﻿using CommandLine;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
+﻿using System;
 using System.IO;
 using System.Linq;
-using System.Resources;
+using CommandLine;
 using System.Text;
+using System.Resources;
+using System.Diagnostics;
+using System.Globalization;
+using System.Collections.Generic;
 
 [assembly: CLSCompliant(true)]
 [assembly: NeutralResourcesLanguage("en")]
 namespace ObjectRetriever
 {
-    //TODO: Bundle PSExec as a resource in the Executable 
-    //TODO: Make it so that all you need to run this is a single executable. No dependcies B.
-    //TODO: Add support for grabbing a list of objects. So Maybe a verb and then options for that. 
-
     static internal class Program
     {
         private static Logger Logger = Logger.LoggerInstance;
@@ -24,6 +20,7 @@ namespace ObjectRetriever
 
         static void Main(string[] args)
         {
+            Logger.LoggingEnabled = false; 
             using (var parser = new Parser(config => config.HelpWriter = null))
             {
                 var parserResult = parser.ParseArguments<Options>(args);
@@ -33,6 +30,9 @@ namespace ObjectRetriever
             }
         }
 
+        /// <summary>
+        /// Main entry point. Runs the program with the parameter options. 
+        /// </summary>
         private static void Run(Options options)
         {
             Logger.Log(Strings.startMessage);
@@ -83,16 +83,25 @@ namespace ObjectRetriever
             Logger.Dispose();
         }
 
+        /// <summary>
+        /// Creates PsExec executable. 
+        /// </summary>
         private static void CreatePsExec(string directoryForExecutable)
         {
             File.WriteAllBytes(directoryForExecutable, ObjectRetriever.Properties.Resources.PsExec);
         }
 
+        /// <summary>
+        /// Disposes PsExec executable. 
+        /// </summary>
         private static void DisposePsExec(string psExecFilePath)
         {
             if (File.Exists(psExecFilePath)) File.Delete(psExecFilePath);
         }
 
+        /// <summary>
+        /// Validates that the arguments passed to the program make sense. 
+        /// </summary>
         private static bool RetrievalOptionsAreValid(string targetObject, List<bool> retrievalFlags)
         {
             // If you don't provide a target object (-t) then at least one of the common object retrieval flags must be true
@@ -100,10 +109,13 @@ namespace ObjectRetriever
             return !(string.IsNullOrEmpty(targetObject) && Truth(retrievalFlags) == 0);
         }
 
+        /// <summary>
+        /// Creates a file name for the output using the objects name. 
+        /// </summary>
         public static string CreateOutputFileName(string retrievedObject)
         {
 
-            retrievedObject = retrievedObject.Substring(0, retrievedObject.IndexOf(Environment.NewLine)) // Get the first line of the object output.
+            retrievedObject = retrievedObject.Substring(0, retrievedObject.IndexOf(Environment.NewLine, StringComparison.CurrentCulture)) // Get the first line of the object output.
                                              .Replace("Object", "") // Get rid of the "Object:" title in the output. 
                                              .Replace("Path", "") // Get rid of the "Path:" title in the output. 
                                              + $"-{DateTime.Now.ToString("dd-MM-yyyy", new CultureInfo("en-US"))}";  // Append the current time for a unique file name. 
@@ -113,6 +125,9 @@ namespace ObjectRetriever
             return string.Join("", retrievedObject.Split(Path.GetInvalidFileNameChars()));
         }
 
+        /// <summary>
+        /// Prints a retrieved object, to the console, and to a file if requested. 
+        /// </summary>
         private static void PrintObject(bool printToFile, string hostName, string retrievedObject)
         {
             Console.Write(retrievedObject);
@@ -120,10 +135,10 @@ namespace ObjectRetriever
             if (printToFile)
             {
                 string fileName = CreateOutputFileName(retrievedObject);
-                string outputFile = CreateFile(CurrentDirectory, $"{hostName.ToUpper()}-{fileName}.txt");
+                string outputFile = CreateFile(CurrentDirectory, hostName.ToUpper(new CultureInfo("en-US")) + "-" + fileName + ".txt"); 
 
-                // The last 3 lines after running WebRiposteObjectFile List Tree [OBJECT] have command output
-                // information (Command ran succesfully, etc.). We don't need that stuff in the final product.
+                // The last 3 lines after running the retrieval command have output information
+                // (Command ran succesfully, etc.). We don't need that stuff in the final product.
                 string[] lines = retrievedObject.Split('\n');
                 Array.Resize(ref lines, lines.Length - 3);
                 retrievedObject = string.Join("", lines).TrimEnd('\r', '\n');
@@ -136,6 +151,9 @@ namespace ObjectRetriever
 
         }
 
+        /// <summary>
+        /// Error handling for a situation where an object was not found on the target. 
+        /// </summary>
         private static void ObjectNotFound(string hostName, string objectPath)
         {
             string message = $"Unable to retrieve the {objectPath} object from the {hostName} terminal. Either the object doesn't exist or a connection with the terminal" +
@@ -148,9 +166,6 @@ namespace ObjectRetriever
         /// <summary>
         /// Creates a file and puts it in the directory you specify. 
         /// </summary>
-        /// <param name="rootDirectory">The folder where the file should be placed</param>
-        /// <param name="fileName">Desired name of the file</param>
-        /// <returns></returns>
         private static string CreateFile(string rootDirectory, string fileName)
         {
             Logger.Log("Creating the " + fileName + " file in the " + rootDirectory + " folder");
@@ -179,6 +194,10 @@ namespace ObjectRetriever
             return booleans.Count(indvidualBoolean => indvidualBoolean);
         }
 
+        /// <summary>
+        /// Runs the flagged retrieval options, which are preset. Common configuration object locations built into the program and 
+        /// called by passing a flag. 
+        /// </summary>
         private static void RunCommonObjectRetrievals(string hostName, bool printToFile, List<(string objectName, bool retrievalFlag)> retrievalData)
         {
             foreach (var item in retrievalData)
@@ -199,6 +218,9 @@ namespace ObjectRetriever
             }
         }
 
+        /// <summary>
+        /// Retrieves a configuration object from the specified terminal. 
+        /// </summary>
         private static string RetrieveObject(string hostName, string targetObject)
         {
             string retrievedObject = "";
@@ -224,18 +246,23 @@ namespace ObjectRetriever
             return retrievedObject;
         }
 
+        /// <summary>
+        /// Validates a hostname. 
+        /// </summary>
         private static bool HostNameIsValid(string hostname)
         {
             return Directory.Exists($"\\\\{hostname}\\c$");
         }
 
+        /// <summary>
+        /// An error so bad we need to leave the program. 
+        /// </summary>m>
         private static void FatalError(string message)
         {
             Logger.Log($"Fatal Error: {message}");
             Logger.Log(Strings.endMessage);
             Logger.Dispose();
             DisposePsExec(PSExecFilePath);
-
             Console.WriteLine($"Fatal Error: {message}\n\nPress any key to exit.".Replace("\n", "\n\t"));
             Console.ReadKey();
             Environment.Exit(1);

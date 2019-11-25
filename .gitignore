@@ -5,10 +5,11 @@ packages/
 Properties/
 Resources/
 
-# Proprietary Stuff 
-Proprietary.cs
+# Stuff that shouldn't go upstairs
 Strings.resx
 Strings.Designer.cs
+FodyWeavers.xml
+FodyWeavers.xsd
 
 # Hidden Folders
 .*

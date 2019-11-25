@@ -1,11 +1,13 @@
 ﻿using System;
-using System.Globalization;
 using System.IO;
+using System.Globalization;
 
 namespace ObjectRetriever
 {
     public class Logger : IDisposable
     {
+        public static bool LoggingEnabled { get; set; } = true;
+
         private static readonly Lazy<Logger> lazy = new Lazy<Logger>(() => new Logger());
         public static Logger LoggerInstance { get { return lazy.Value; } }
 
@@ -21,8 +23,11 @@ namespace ObjectRetriever
 
         internal void Log(string message)
         {
-            _fileLogger.WriteLine(DateTime.Now + "         " + message);
-            _fileLogger.Flush();
+            if (LoggingEnabled)
+            {
+                _fileLogger.WriteLine(DateTime.Now + "         " + message);
+                _fileLogger.Flush();
+            }
         }
 
         public void Dispose()
