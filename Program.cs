@@ -15,13 +15,11 @@ namespace ObjectRetriever
 {
     static internal class Program
     {
-        private static Logger Logger = Logger.LoggerInstance;
         private static readonly string CurrentDirectory = Directory.GetCurrentDirectory();
         private static readonly string PSExecFilePath = Path.Combine(CurrentDirectory, "PSExec.exe");
 
         static void Main(string[] args)
         {
-            Logger.LoggingEnabled = false; 
             using (var parser = new Parser(config => config.HelpWriter = null))
             {
                 var parserResult = parser.ParseArguments<Options>(args);
@@ -36,7 +34,6 @@ namespace ObjectRetriever
         /// </summary>
         private static void Run(Options options)
         {
-            Logger.Log(Strings.startMessage);
             string hostName = options.HostName;
             string targetObject = options.TargetObject;
             bool printToFile = options.PrintToFile;
@@ -58,7 +55,13 @@ namespace ObjectRetriever
 
             CreatePsExec(PSExecFilePath);
 
-            if (!string.IsNullOrEmpty(targetObject))
+            if (string.IsNullOrEmpty(targetObject))
+            {
+                // If no target object is provided (-t /Object/To/Grab) then one of the common retrieval flags must be set 
+                // for the program to be here. 
+                RunCommonObjectRetrievals(hostName, printToFile, retrievalData);
+            }
+            else
             {
                 string retrievedObject = RetrieveObject(hostName, targetObject);
 
@@ -71,16 +74,8 @@ namespace ObjectRetriever
                     ObjectNotFound(hostName, targetObject);
                 }
             }
-            else
-            {
-                // If no target object is provided (-t /Object/To/Grab) then one of the common retrieval flags must be set 
-                // for the program to be here. 
-                RunCommonObjectRetrievals(hostName, printToFile, retrievalData);
-            }
 
-            Logger.Log(Strings.endMessage);
             DisposePsExec(PSExecFilePath);
-            Logger.Dispose();
         }
 
         /// <summary>
@@ -132,21 +127,20 @@ namespace ObjectRetriever
         {
             Console.Write(retrievedObject);
 
-            if (printToFile)
+            if (!printToFile) return;
+
+            string fileName = CreateOutputFileName(retrievedObject);
+            string outputFile = CreateFile(CurrentDirectory, hostName.ToUpper(new CultureInfo("en-US")) + "-" + fileName + ".txt");
+
+            // The last 3 lines after running the retrieval command have output information
+            // (Command ran succesfully, etc.). We don't need that stuff in the final product.
+            string[] lines = retrievedObject.Split('\n');
+            Array.Resize(ref lines, lines.Length - 3);
+            retrievedObject = string.Join("", lines).TrimEnd('\r', '\n');
+
+            using (StreamWriter sw = new StreamWriter(outputFile, false))
             {
-                string fileName = CreateOutputFileName(retrievedObject);
-                string outputFile = CreateFile(CurrentDirectory, hostName.ToUpper(new CultureInfo("en-US")) + "-" + fileName + ".txt"); 
-
-                // The last 3 lines after running the retrieval command have output information
-                // (Command ran succesfully, etc.). We don't need that stuff in the final product.
-                string[] lines = retrievedObject.Split('\n');
-                Array.Resize(ref lines, lines.Length - 3);
-                retrievedObject = string.Join("", lines).TrimEnd('\r', '\n');
-
-                using (StreamWriter sw = new StreamWriter(outputFile, false))
-                {
-                    sw.Write(retrievedObject);
-                }
+                sw.Write(retrievedObject);
             }
 
         }
@@ -159,7 +153,6 @@ namespace ObjectRetriever
             string message = $"Unable to retrieve the {objectPath} object from the {hostName} terminal. Either the object doesn't exist or a connection with the terminal" +
                 $" was unable to be established.";
 
-            Logger.Log(message);
             Console.WriteLine(message);
         }
 
@@ -168,19 +161,9 @@ namespace ObjectRetriever
         /// </summary>
         private static string CreateFile(string rootDirectory, string fileName)
         {
-            Logger.Log("Creating the " + fileName + " file in the " + rootDirectory + " folder");
-
             string theFile = $@"{rootDirectory}\{fileName}";
 
-            if (!File.Exists(theFile))
-            {
-                File.Create(theFile).Dispose();
-                Logger.Log(fileName + " file created successfully");
-            }
-            else
-            {
-                Logger.Log(fileName + " already exists as a file");
-            }
+            if (!File.Exists(theFile)) File.Create(theFile).Dispose();
 
             return theFile;
         }
@@ -227,10 +210,10 @@ namespace ObjectRetriever
             {
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
-                RedirectStandardError = true, 
+                RedirectStandardError = true,
                 CreateNoWindow = true,
                 StandardOutputEncoding = Encoding.Unicode,
-                StandardErrorEncoding = Encoding.Unicode, 
+                StandardErrorEncoding = Encoding.Unicode,
                 WindowStyle = ProcessWindowStyle.Hidden,
                 FileName = "PSExec",
                 Arguments = $@"/s -nobanner \\{hostName} {Strings.listObjectTreeCommand} {targetObject}"
@@ -239,11 +222,11 @@ namespace ObjectRetriever
             using (Process proc = new Process())
             {
                 proc.StartInfo = info;
-                proc.Start(); 
+                proc.Start();
                 string standardOutput = proc.StandardOutput.ReadToEnd();
                 // There's some junk in the error messaging of the retrieval command so pulling that out. 
                 string errorOutput = new Regex(@"[^a-zA-Z0-9 \\\/]").Replace(proc.StandardError.ReadToEnd(), "");
-                return string.IsNullOrEmpty(standardOutput) ? errorOutput : standardOutput; 
+                return string.IsNullOrEmpty(standardOutput) ? errorOutput : standardOutput;
             }
         }
 
@@ -260,9 +243,6 @@ namespace ObjectRetriever
         /// </summary>m>
         private static void FatalError(string message)
         {
-            Logger.Log($"Fatal Error: {message}");
-            Logger.Log(Strings.endMessage);
-            Logger.Dispose();
             DisposePsExec(PSExecFilePath);
             Console.WriteLine($"Fatal Error: {message}\n\nPress any key to exit.".Replace("\n", "\n\t"));
             Console.ReadKey();

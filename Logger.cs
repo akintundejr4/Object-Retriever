@@ -6,8 +6,6 @@ namespace ObjectRetriever
 {
     public class Logger : IDisposable
     {
-        public static bool LoggingEnabled { get; set; } = true;
-
         private static readonly Lazy<Logger> lazy = new Lazy<Logger>(() => new Logger());
         public static Logger LoggerInstance { get { return lazy.Value; } }
 
@@ -17,17 +15,14 @@ namespace ObjectRetriever
         private Logger()
         {
             string dateTime = DateTime.Now.ToString("MMM-dd-yyyy-hh-mm", new CultureInfo("en-US"));
-            string logFileName = Path.Combine(Directory.GetCurrentDirectory(), $"ObjectRetriever-{dateTime}.log"); 
+            string logFileName = Path.Combine(Directory.GetCurrentDirectory(), $"ObjectRetriever-{dateTime}.log");
             _fileLogger = new StreamWriter(logFileName, false);
         }
 
         internal void Log(string message)
         {
-            if (LoggingEnabled)
-            {
-                _fileLogger.WriteLine(DateTime.Now + "         " + message);
-                _fileLogger.Flush();
-            }
+            _fileLogger.WriteLine(DateTime.Now + "         " + message);
+            _fileLogger.Flush();
         }
 
         public void Dispose()
@@ -44,11 +39,11 @@ namespace ObjectRetriever
         protected virtual void Dispose(bool disposing)
         {
             // Check to see if Dispose has already been called.
-            if(!this.disposed)
+            if (!this.disposed)
             {
                 // If disposing equals true, dispose all managed
                 // and unmanaged resources.
-                if(disposing)
+                if (disposing)
                 {
                     // Dispose managed resources.
                     _fileLogger.Dispose();
