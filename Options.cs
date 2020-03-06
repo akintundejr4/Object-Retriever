@@ -7,6 +7,14 @@ namespace ObjectRetriever
 {
     class Options
     {
+        private static UnParserSettings settings = new UnParserSettings(); 
+
+        static Options()
+        {
+            settings.PreferShortName = true;
+            settings.GroupSwitches = true;
+            settings.UseEqualToken = true; 
+        }
         /// <summary>
         /// The host name of the terminal to get the object from. 
         /// </summary>
@@ -16,29 +24,29 @@ namespace ObjectRetriever
         /// <summary>
         /// The object to retrieve from the message store, i.e, the target object. 
         /// </summary>
-        [Option('t', "targetobject", SetName = "DirectRetrieval", Required = false, HelpText = "Optional: The object to retreive. Exclusive: This option is not compatible with the common object retrieval flags.")]
+        [Option('o', "object", SetName = "DirectRetrieval", Required = false, HelpText = "Optional. The object to retreive.")]
         public string TargetObject { get; set; }
         
         /// <summary>
         /// Flag for grabbing the contents of /Configurations/RSS/EnabledServices. 
         /// </summary>
-        [Option('e', "enabledservices", SetName="CommonRetrievals", Required = false, HelpText = "Optional: Retrieves the object denoting enabled services from the target terminal. Exclusive: This flag is not compatible with -t, but can be used with other common retrieval flags.")]
+        [Option('e', "enabledservices", SetName="CommonRetrievals", Required = false, HelpText = "Optional. Retrieves the object denoting enabled services from the target terminal.")]
         public bool GetEnabledServices { get; set; }
 
         /// <summary>
         /// Flag for grabbing the contents of /Configurations/EGA/Logging. 
         /// </summary>
-        [Option('l', "logging", SetName = "CommonRetrievals", Required = false, HelpText = "Optional: Retrieves the object denoting enabled logging on the target terminal. Exclusive: This flag is not compatible with -t, but can be used with other common retrieval flags.")]
+        [Option('l', "logging", SetName = "CommonRetrievals", Required = false, HelpText = "Optional. Retrieves the object denoting enabled logging on the target terminal.")]
         public bool GetEnabledLogging { get; set; }
 
         /// <summary>
         /// Flag for printing the retrieved objects contents to a file, instead of the console. 
         /// </summary>
-        [Option('p', "printfile", Required = false, HelpText = "Optional: Prints the retrieved object(s) to a file, instead of the console.")]
+        [Option('p', "printfile", Required = false, HelpText = "Optional. Prints the retrieved object(s) to a file, instead of the console.")]
         public bool PrintToFile { get; set; }
 
         /// <summary>
-        /// Display's help text if invalid arguments are passed to the program. The CommandLineParser library provides default help text, so this method
+        /// Displays help text if invalid arguments are passed to the program. The CommandLineParser library provides default help text, so this method
         /// is just for setting custom attributes, like the width of the help text and the header, etc. 
         /// </summary>
         public static void DisplayHelp<T>(ParserResult<T> result, IEnumerable<Error> errs)
@@ -46,12 +54,26 @@ namespace ObjectRetriever
             var helpText = HelpText.AutoBuild(result, h =>
             {
                 h.Heading = "ObjectRetriever v1.0.0";
-                h.Copyright = "Copyright @ 2019 SegunAkinyemi.com";
+                h.Copyright = $"Copyright @ {DateTime.Now.Year} SegunAkinyemi.com";
                 h.MaximumDisplayWidth = 120;
+                h.AdditionalNewLineAfterOption = true;
+                h.AddNewLineBetweenHelpSections = true; 
                 return HelpText.DefaultParsingErrorsHandler(result, h);
             }, e => e);
 
             Console.WriteLine(helpText);
+        }
+
+        [Usage(ApplicationAlias = "GrabObject.exe")]
+        public static IEnumerable<Example> Examples
+        {
+            get
+            {
+                yield return new Example("Standard Retrieval", settings, new Options { HostName = "SALSMOFGFC7", TargetObject = "/Configurations/RSS/Data"});
+                yield return new Example("\nStandard Retrieval with Print To File", settings,  new Options { HostName = "SALSMOFGFC7", TargetObject = "/Configurations/RSS/Data", PrintToFile = true});
+                yield return new Example("\nRetrieving Enabled Services", settings, new Options { HostName = "SALSMOFGFC7", GetEnabledServices = true });
+                yield return new Example("\nRetrieving Enabled Logging", settings,  new Options { HostName = "SALSMOFGFC7", GetEnabledLogging = true });
+            }
         }
     }
 }
