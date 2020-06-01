@@ -7,14 +7,15 @@ namespace ObjectRetriever
 {
     class Options
     {
-        private static UnParserSettings settings = new UnParserSettings(); 
+        private static UnParserSettings settings = new UnParserSettings();
 
         static Options()
         {
             settings.PreferShortName = true;
             settings.GroupSwitches = true;
-            settings.UseEqualToken = true; 
+            settings.UseEqualToken = true;
         }
+
         /// <summary>
         /// The host name of the terminal to get the object from. 
         /// </summary>
@@ -26,11 +27,11 @@ namespace ObjectRetriever
         /// </summary>
         [Option('o', "object", SetName = "DirectRetrieval", Required = false, HelpText = "Optional. The object to retreive.")]
         public string TargetObject { get; set; }
-        
+
         /// <summary>
         /// Flag for grabbing the contents of /Configurations/RSS/EnabledServices. 
         /// </summary>
-        [Option('e', "enabledservices", SetName="CommonRetrievals", Required = false, HelpText = "Optional. Retrieves the object denoting enabled services from the target terminal.")]
+        [Option('e', "enabledservices", SetName = "CommonRetrievals", Required = false, HelpText = "Optional. Retrieves the object denoting enabled services from the target terminal.")]
         public bool GetEnabledServices { get; set; }
 
         /// <summary>
@@ -57,7 +58,7 @@ namespace ObjectRetriever
                 h.Copyright = $"Copyright @ {DateTime.Now.Year} SegunAkinyemi.com";
                 h.MaximumDisplayWidth = 120;
                 h.AdditionalNewLineAfterOption = true;
-                h.AddNewLineBetweenHelpSections = true; 
+                h.AddNewLineBetweenHelpSections = true;
                 return HelpText.DefaultParsingErrorsHandler(result, h);
             }, e => e);
 
@@ -69,10 +70,10 @@ namespace ObjectRetriever
         {
             get
             {
-                yield return new Example("Standard Retrieval", settings, new Options { HostName = "SALSMOFGFC7", TargetObject = "/Configurations/RSS/Data"});
-                yield return new Example("\nStandard Retrieval with Print To File", settings,  new Options { HostName = "SALSMOFGFC7", TargetObject = "/Configurations/RSS/Data", PrintToFile = true});
+                yield return new Example("Standard Retrieval", settings, new Options { HostName = "SALSMOFGFC7", TargetObject = "/Configurations/RSS/Data" });
+                yield return new Example("\nStandard Retrieval with Print To File", settings, new Options { HostName = "SALSMOFGFC7", TargetObject = "/Configurations/RSS/Data", PrintToFile = true });
                 yield return new Example("\nRetrieving Enabled Services", settings, new Options { HostName = "SALSMOFGFC7", GetEnabledServices = true });
-                yield return new Example("\nRetrieving Enabled Logging", settings,  new Options { HostName = "SALSMOFGFC7", GetEnabledLogging = true });
+                yield return new Example("\nRetrieving Enabled Logging", settings, new Options { HostName = "SALSMOFGFC7", GetEnabledLogging = true });
             }
         }
     }

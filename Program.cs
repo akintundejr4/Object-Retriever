@@ -15,7 +15,7 @@ namespace ObjectRetriever
 {
     static internal class Program
     {
-        private const string TempDirectory = "C:\\Temp"; 
+        private const string TempDirectory = "C:\\Temp";
         private static readonly string PSExecFilePath = Path.Combine(TempDirectory, "PSExec.exe");
 
         static void Main(string[] args)
@@ -38,7 +38,7 @@ namespace ObjectRetriever
             string targetObject = options.TargetObject;
             bool printToFile = options.PrintToFile;
 
-            Directory.CreateDirectory(TempDirectory); 
+            Directory.CreateDirectory(TempDirectory);
 
             var retrievalData = new List<(string objectName, bool retrievalFlag)>
             {
@@ -67,7 +67,7 @@ namespace ObjectRetriever
             {
                 string retrievedObject = RetrieveObject(hostName, targetObject);
 
-                if (retrievedObject.Contains("ERROR")) 
+                if (retrievedObject.Contains("ERROR"))
                 {
                     ObjectNotFound(hostName, targetObject);
                 }
@@ -171,7 +171,7 @@ namespace ObjectRetriever
         }
 
         /// <summary>
-        /// Da Truth. You give this method a list of booleans. It returns an integer telling you how many of them are 
+        /// The Truth! You give this method a list of booleans. It returns an integer telling you how many of them are 
         /// true. 
         /// </summary>
         public static int Truth(List<bool> booleans)
@@ -242,11 +242,11 @@ namespace ObjectRetriever
 
         /// <summary>
         /// An error so bad we need to leave the program. 
-        /// </summary>m>
+        /// </summary>
         private static void FatalError(string message)
         {
             DisposePsExec(PSExecFilePath);
-            string formattedMessage = $"\nFatal Error: {message} \n\nPress any key to exit."; 
+            string formattedMessage = $"\nFatal Error: {message} \n\nPress any key to exit.";
             Console.WriteLine(formattedMessage.Replace("\n", "\n\t"));
             Console.ReadKey();
             Environment.Exit(1);
